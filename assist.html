@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot with OpenAI Chat API</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #chatbox {
+            width: 600px;
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: auto;
+            margin-top: 50px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            position: relative;
+        }
+        #userInput {
+            position: fixed;
+            bottom: 0;
+            background: #fff;
+            width: 600px;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+        #conversation div {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            max-width: 80%;
+            clear: both;
+        }
+        #conversation div strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+        #conversation .user {
+            background-color: #c0ffc0;
+            align-self: flex-start;
+            animation: slidein 0.5s forwards;
+            margin-right: auto;
+        }
+        #conversation .assistant {
+            background-color: #c0c0ff;
+            align-self: flex-end;
+            animation: slidein 0.5s forwards;
+            margin-left: auto;
+        }
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        @keyframes slidein {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>beech-y.turbo</h2>
+    <div id="chatbox">
+        <div class="loading-spinner">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/0.16.1/images/loader-large.gif" alt="Loading..." />
+        </div>
+        <div id="conversation">
+            <!-- Chat history will appear here -->
+        </div>
+    </div>
+    <div id="userInput">
+        <input type="text" id="inputMessage" placeholder="Type your message here..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        var conversationHistory = [];
+        conversationHistory = [
+        {
+            'role': 'system',
+            'content': 'You are Beech-Y, an assistant developed by yazidears for a informatics project.'
+        }
+    ];
+
+        function sendMessage() {
+            var message = $('#inputMessage').val();
+
+            // Add user message to conversation
+            var userMessageElement = $('<div class="user"><strong>You:</strong> ' + message + '</div>');
+            $('#conversation').append(userMessageElement);
+
+            conversationHistory.push({
+                'role': 'user',
+                'content': message
+            });
+
+            // Show loading spinner
+            $('.loading-spinner').show();
+
+            $.ajax({
+                url: 'https://api.openai.com/v1/chat/completions',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer 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'
+                },
+                data: JSON.stringify({
+                    'model': 'gpt-3.5-turbo',
+                    'messages': conversationHistory
+                }),
+                success: function(data) {
+                    // Add AI response to conversation
+                    var ai_message = data['choices'][0]['message']['content'].trim();
+                    var assistantMessageElement = $('<div class="assistant"><strong>AI:</strong> ' + ai_message + '</div>');
+                    $('#conversation').append(assistantMessageElement);
+                    
+                    conversationHistory.push({
+                        'role': 'assistant',
+                        'content': ai_message
+                    });
+
+                    // Scroll to bottom
+                    $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+
+                    // Hide loading spinner
+                    $('.loading-spinner').hide();
+                },
+                error: function() {
+                    alert("There was an error with the OpenAI API request.");
+
+                    // Hide loading spinner
+                    $('.loading-spinner').hide();
+                }
+            });
+
+            // Clear input field
+            $('#inputMessage').val('');
+        }
+    </script>
+</body>
+</html>
